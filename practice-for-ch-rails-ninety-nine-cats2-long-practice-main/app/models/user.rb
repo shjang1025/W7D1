@@ -5,6 +5,10 @@ class User < ApplicationRecord
     before_validation :ensure_session_token
     attr_reader :password
 
+    has_many :cats, 
+        inverse_of: :owner,
+        class_name: :Cat
+
     def self.find_by_credentials(username, password)
         user = User.find_by(username: username)
         if user && user.is_password?(password)

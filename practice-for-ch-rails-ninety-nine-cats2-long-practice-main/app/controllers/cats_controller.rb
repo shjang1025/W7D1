@@ -1,4 +1,7 @@
 class CatsController < ApplicationController
+  before_action :require_logged_in, only: [:new, :create]
+  before_action :authorize_cat_owner, only: [:edit, :update]
+
   def index
     @cats = Cat.all
     render :index
@@ -16,6 +19,7 @@ class CatsController < ApplicationController
 
   def create
     @cat = Cat.new(cat_params)
+    @cat.owner_id = current_user.id
     if @cat.save
       redirect_to cat_url(@cat)
     else
@@ -25,12 +29,12 @@ class CatsController < ApplicationController
   end
 
   def edit
-    @cat = Cat.find(params[:id])
+    @cat = Cat.find_by(owner_id: current_user.id)
     render :edit
   end
 
   def update
-    @cat = Cat.find(params[:id])
+    @cat = Cat.find_by(owner_id: current_user.id)
     if @cat.update(cat_params)
       redirect_to cat_url(@cat)
     else
@@ -44,4 +48,13 @@ class CatsController < ApplicationController
   def cat_params
     params.require(:cat).permit(:birth_date, :color, :description, :name, :sex)
   end
+
+  def authorize_cat_owner
+    @cat = current_user.cats.find(params[:id])
+    unless @cat
+      flash[:alert] = "You are not authorized to edit this cat."
+      redirect_to cats_url
+    end
+  end
+
 end
